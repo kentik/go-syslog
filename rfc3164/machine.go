@@ -36,6 +36,7 @@ type machine struct {
 	bestEffort bool
 	yyyy       int
 	rfc3339    bool
+	sequence   bool
 	loc        *time.Location
 	timezone   *time.Location
 }
@@ -81,6 +82,13 @@ func (m *machine) WithLocaleTimezone(loc *time.Location) {
 // Notice this does not disable the default and correct timestamps - ie., Stamp timestamps.
 func (m *machine) WithRFC3339() {
 	m.rfc3339 = true
+}
+
+// WithSequence enables parsing of non-standard Cisco iOS logs that include a sequence number.
+//
+// See https://www.cisco.com/c/en/us/td/docs/routers/access/wireless/software/guide/SysMsgLogging.html#wp1054751
+func (m *machine) WithSequence() {
+	m.sequence = true
 }
 
 // Err returns the error that occurred on the last call to Parse.
@@ -2169,7 +2177,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		}
 
 		goto st0
-	tr18:
+	tr19:
 
 		m.err = fmt.Errorf(errTimestamp, m.p)
 		(m.p)--
@@ -2179,7 +2187,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		}
 
 		goto st0
-	tr41:
+	tr42:
 
 		m.err = fmt.Errorf(errHostname, m.p)
 		(m.p)--
@@ -2296,9 +2304,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase4:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
-			if m.rfc3339 {
+			_widec = 1280 + (int16((m.data)[(m.p)]) - 0)
+			if m.sequence {
 				_widec += 256
+			}
+			if m.rfc3339 {
+				_widec += 512
 			}
 		}
 		switch _widec {
@@ -2322,12 +2333,16 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 			goto tr15
 		}
 		switch {
-		case _widec > 313:
-			if 560 <= _widec && _widec <= 569 {
-				goto tr17
+		case _widec < 1840:
+			if 1584 <= _widec && _widec <= 1593 {
+				goto tr16
 			}
-		case _widec >= 304:
-			goto tr16
+		case _widec > 1849:
+			if 2096 <= _widec && _widec <= 2105 {
+				goto tr18
+			}
+		default:
+			goto tr17
 		}
 		goto tr7
 	tr8:
@@ -2346,7 +2361,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		case 117:
 			goto st32
 		}
-		goto tr18
+		goto tr19
 	st6:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof6
@@ -2355,7 +2370,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 114 {
 			goto st7
 		}
-		goto tr18
+		goto tr19
 	st7:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof7
@@ -2364,7 +2379,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 32 {
 			goto st8
 		}
-		goto tr18
+		goto tr19
 	st8:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof8
@@ -2379,7 +2394,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if 49 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 50 {
 			goto st30
 		}
-		goto tr18
+		goto tr19
 	st9:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof9
@@ -2388,7 +2403,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if 49 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
 			goto st10
 		}
-		goto tr18
+		goto tr19
 	st10:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof10
@@ -2397,7 +2412,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 32 {
 			goto st11
 		}
-		goto tr18
+		goto tr19
 	st11:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof11
@@ -2409,7 +2424,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 49 {
 			goto st12
 		}
-		goto tr18
+		goto tr19
 	st12:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof12
@@ -2418,7 +2433,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
 			goto st13
 		}
-		goto tr18
+		goto tr19
 	st13:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof13
@@ -2427,7 +2442,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 58 {
 			goto st14
 		}
-		goto tr18
+		goto tr19
 	st14:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof14
@@ -2436,7 +2451,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 53 {
 			goto st15
 		}
-		goto tr18
+		goto tr19
 	st15:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof15
@@ -2445,7 +2460,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
 			goto st16
 		}
-		goto tr18
+		goto tr19
 	st16:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof16
@@ -2454,7 +2469,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 58 {
 			goto st17
 		}
-		goto tr18
+		goto tr19
 	st17:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof17
@@ -2463,7 +2478,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 53 {
 			goto st18
 		}
-		goto tr18
+		goto tr19
 	st18:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof18
@@ -2472,7 +2487,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
 			goto st19
 		}
-		goto tr18
+		goto tr19
 	st19:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof19
@@ -2480,14 +2495,14 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase19:
 		switch (m.data)[(m.p)] {
 		case 32:
-			goto tr37
+			goto tr38
 		case 46:
 			goto st21
 		case 58:
-			goto tr40
+			goto tr41
 		}
 		goto st0
-	tr37:
+	tr38:
 
 		if t, e := time.Parse(time.Stamp, string(m.text())); e != nil {
 			m.err = fmt.Errorf("%s [col %d]", e, m.p)
@@ -2530,26 +2545,26 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase20:
 		switch (m.data)[(m.p)] {
 		case 32:
-			goto tr42
+			goto tr43
 		case 91:
-			goto tr45
+			goto tr46
 		case 127:
-			goto tr41
+			goto tr42
 		}
 		switch {
 		case (m.data)[(m.p)] < 33:
 			if (m.data)[(m.p)] <= 31 {
-				goto tr41
+				goto tr42
 			}
 		case (m.data)[(m.p)] > 57:
 			if 59 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 126 {
-				goto tr43
+				goto tr44
 			}
 		default:
-			goto tr43
+			goto tr44
 		}
-		goto tr44
-	tr42:
+		goto tr45
+	tr43:
 
 		m.pb = m.p
 
@@ -2563,25 +2578,25 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		case 10:
 			goto tr104
 		case 32:
-			goto tr42
+			goto tr43
 		case 91:
-			goto tr45
+			goto tr46
 		case 127:
-			goto tr41
+			goto tr42
 		}
 		switch {
 		case (m.data)[(m.p)] < 33:
 			if (m.data)[(m.p)] <= 31 {
-				goto tr41
+				goto tr42
 			}
 		case (m.data)[(m.p)] > 57:
 			if 59 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 126 {
-				goto tr43
+				goto tr44
 			}
 		default:
-			goto tr43
+			goto tr44
 		}
-		goto tr44
+		goto tr45
 	tr104:
 
 		output.message = string(m.text())
@@ -2593,7 +2608,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		}
 	stCase89:
 		goto st0
-	tr43:
+	tr44:
 
 		m.pb = m.p
 
@@ -2664,7 +2679,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		default:
 			goto tr113
 		}
-		goto tr44
+		goto tr45
 	tr113:
 
 		m.pb = m.p
@@ -2694,7 +2709,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 			goto st0
 		}
 		goto st93
-	tr44:
+	tr45:
 
 		m.pb = m.p
 
@@ -3873,7 +3888,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] <= 31 {
 			goto st0
 		}
-		goto tr44
+		goto tr45
 	tr115:
 
 		output.tag = string(m.text())
@@ -28327,7 +28342,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 			goto tr105
 		}
 		goto st93
-	tr45:
+	tr46:
 
 		m.pb = m.p
 
@@ -28392,7 +28407,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
 			goto st22
 		}
-		goto tr18
+		goto tr19
 	st22:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof22
@@ -28400,9 +28415,9 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase22:
 		switch (m.data)[(m.p)] {
 		case 32:
-			goto tr37
+			goto tr38
 		case 58:
-			goto tr40
+			goto tr41
 		}
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
 			goto st23
@@ -28415,9 +28430,9 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase23:
 		switch (m.data)[(m.p)] {
 		case 32:
-			goto tr37
+			goto tr38
 		case 58:
-			goto tr40
+			goto tr41
 		}
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
 			goto st24
@@ -28430,9 +28445,9 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase24:
 		switch (m.data)[(m.p)] {
 		case 32:
-			goto tr37
+			goto tr38
 		case 58:
-			goto tr40
+			goto tr41
 		}
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
 			goto st25
@@ -28445,9 +28460,9 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase25:
 		switch (m.data)[(m.p)] {
 		case 32:
-			goto tr37
+			goto tr38
 		case 58:
-			goto tr40
+			goto tr41
 		}
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
 			goto st26
@@ -28460,9 +28475,9 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase26:
 		switch (m.data)[(m.p)] {
 		case 32:
-			goto tr37
+			goto tr38
 		case 58:
-			goto tr40
+			goto tr41
 		}
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
 			goto st27
@@ -28475,12 +28490,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase27:
 		switch (m.data)[(m.p)] {
 		case 32:
-			goto tr37
+			goto tr38
 		case 58:
-			goto tr40
+			goto tr41
 		}
 		goto st0
-	tr40:
+	tr41:
 
 		if t, e := time.Parse(time.Stamp, string(m.text())); e != nil {
 			m.err = fmt.Errorf("%s [col %d]", e, m.p)
@@ -28533,7 +28548,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 51 {
 			goto st13
 		}
-		goto tr18
+		goto tr19
 	st30:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof30
@@ -28542,7 +28557,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
 			goto st10
 		}
-		goto tr18
+		goto tr19
 	st31:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof31
@@ -28551,7 +28566,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 49 {
 			goto st10
 		}
-		goto tr18
+		goto tr19
 	st32:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof32
@@ -28560,7 +28575,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 103 {
 			goto st7
 		}
-		goto tr18
+		goto tr19
 	tr9:
 
 		m.pb = m.p
@@ -28574,7 +28589,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 101 {
 			goto st34
 		}
-		goto tr18
+		goto tr19
 	st34:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof34
@@ -28583,7 +28598,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 99 {
 			goto st7
 		}
-		goto tr18
+		goto tr19
 	tr10:
 
 		m.pb = m.p
@@ -28597,7 +28612,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 101 {
 			goto st36
 		}
-		goto tr18
+		goto tr19
 	st36:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof36
@@ -28606,7 +28621,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 98 {
 			goto st7
 		}
-		goto tr18
+		goto tr19
 	tr11:
 
 		m.pb = m.p
@@ -28623,7 +28638,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		case 117:
 			goto st39
 		}
-		goto tr18
+		goto tr19
 	st38:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof38
@@ -28632,7 +28647,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 110 {
 			goto st7
 		}
-		goto tr18
+		goto tr19
 	st39:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof39
@@ -28644,7 +28659,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		case 110:
 			goto st7
 		}
-		goto tr18
+		goto tr19
 	tr12:
 
 		m.pb = m.p
@@ -28658,7 +28673,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 97 {
 			goto st41
 		}
-		goto tr18
+		goto tr19
 	st41:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof41
@@ -28670,7 +28685,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		case 121:
 			goto st7
 		}
-		goto tr18
+		goto tr19
 	tr13:
 
 		m.pb = m.p
@@ -28684,7 +28699,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 111 {
 			goto st43
 		}
-		goto tr18
+		goto tr19
 	st43:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof43
@@ -28693,7 +28708,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 118 {
 			goto st7
 		}
-		goto tr18
+		goto tr19
 	tr14:
 
 		m.pb = m.p
@@ -28707,7 +28722,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 99 {
 			goto st45
 		}
-		goto tr18
+		goto tr19
 	st45:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof45
@@ -28716,7 +28731,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 116 {
 			goto st7
 		}
-		goto tr18
+		goto tr19
 	tr15:
 
 		m.pb = m.p
@@ -28730,7 +28745,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 101 {
 			goto st47
 		}
-		goto tr18
+		goto tr19
 	st47:
 		if (m.p)++; (m.p) == (m.pe) {
 			goto _testEof47
@@ -28739,7 +28754,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		if (m.data)[(m.p)] == 112 {
 			goto st7
 		}
-		goto tr18
+		goto tr19
 	tr16:
 
 		m.pb = m.p
@@ -28750,14 +28765,29 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 			goto _testEof48
 		}
 	stCase48:
-		if (m.data)[(m.p)] == 58 {
-			goto tr62
+		_widec = int16((m.data)[(m.p)])
+		switch {
+		case (m.data)[(m.p)] > 57:
+			if 58 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 58 {
+				_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+				if m.sequence {
+					_widec += 256
+				}
+			}
+		case (m.data)[(m.p)] >= 48:
+			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			if m.sequence {
+				_widec += 256
+			}
 		}
-		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
+		if _widec == 570 {
+			goto tr63
+		}
+		if 560 <= _widec && _widec <= 569 {
 			goto st48
 		}
 		goto st0
-	tr62:
+	tr63:
 
 		output.sequence = common.UnsafeUTF8DecimalCodePointsToInt(m.text())
 		output.sequenceSet = true
@@ -28768,10 +28798,25 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 			goto _testEof49
 		}
 	stCase49:
-		switch (m.data)[(m.p)] {
-		case 32:
+		_widec = int16((m.data)[(m.p)])
+		switch {
+		case (m.data)[(m.p)] > 32:
+			if 42 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 42 {
+				_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+				if m.sequence {
+					_widec += 256
+				}
+			}
+		case (m.data)[(m.p)] >= 32:
+			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			if m.sequence {
+				_widec += 256
+			}
+		}
+		switch _widec {
+		case 544:
 			goto st49
-		case 42:
+		case 554:
 			goto st50
 		}
 		goto st0
@@ -28782,7 +28827,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase50:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
@@ -28805,11 +28850,11 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		case 83:
 			goto tr15
 		}
-		if 560 <= _widec && _widec <= 569 {
-			goto tr65
+		if 1072 <= _widec && _widec <= 1081 {
+			goto tr17
 		}
-		goto tr18
-	tr65:
+		goto tr19
+	tr17:
 
 		m.pb = m.p
 
@@ -28821,12 +28866,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase51:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 560 <= _widec && _widec <= 569 {
+		if 1072 <= _widec && _widec <= 1081 {
 			goto st52
 		}
 		goto st0
@@ -28837,12 +28882,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase52:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 560 <= _widec && _widec <= 569 {
+		if 1072 <= _widec && _widec <= 1081 {
 			goto st53
 		}
 		goto st0
@@ -28853,12 +28898,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase53:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 560 <= _widec && _widec <= 569 {
+		if 1072 <= _widec && _widec <= 1081 {
 			goto st54
 		}
 		goto st0
@@ -28869,12 +28914,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase54:
 		_widec = int16((m.data)[(m.p)])
 		if 45 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 45 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if _widec == 557 {
+		if _widec == 1069 {
 			goto st55
 		}
 		goto st0
@@ -28887,21 +28932,21 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		switch {
 		case (m.data)[(m.p)] > 48:
 			if 49 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 49 {
-				_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+				_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 				if m.rfc3339 {
 					_widec += 256
 				}
 			}
 		case (m.data)[(m.p)] >= 48:
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
 		switch _widec {
-		case 560:
+		case 1072:
 			goto st56
-		case 561:
+		case 1073:
 			goto st80
 		}
 		goto st0
@@ -28912,12 +28957,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase56:
 		_widec = int16((m.data)[(m.p)])
 		if 49 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 561 <= _widec && _widec <= 569 {
+		if 1073 <= _widec && _widec <= 1081 {
 			goto st57
 		}
 		goto st0
@@ -28928,12 +28973,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase57:
 		_widec = int16((m.data)[(m.p)])
 		if 45 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 45 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if _widec == 557 {
+		if _widec == 1069 {
 			goto st58
 		}
 		goto st0
@@ -28946,31 +28991,31 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		switch {
 		case (m.data)[(m.p)] < 49:
 			if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 48 {
-				_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+				_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 				if m.rfc3339 {
 					_widec += 256
 				}
 			}
 		case (m.data)[(m.p)] > 50:
 			if 51 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 51 {
-				_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+				_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 				if m.rfc3339 {
 					_widec += 256
 				}
 			}
 		default:
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
 		switch _widec {
-		case 560:
+		case 1072:
 			goto st59
-		case 563:
+		case 1075:
 			goto st79
 		}
-		if 561 <= _widec && _widec <= 562 {
+		if 1073 <= _widec && _widec <= 1074 {
 			goto st78
 		}
 		goto st0
@@ -28981,12 +29026,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase59:
 		_widec = int16((m.data)[(m.p)])
 		if 49 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 561 <= _widec && _widec <= 569 {
+		if 1073 <= _widec && _widec <= 1081 {
 			goto st60
 		}
 		goto st0
@@ -28997,12 +29042,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase60:
 		_widec = int16((m.data)[(m.p)])
 		if 84 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 84 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if _widec == 596 {
+		if _widec == 1108 {
 			goto st61
 		}
 		goto st0
@@ -29015,21 +29060,21 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		switch {
 		case (m.data)[(m.p)] > 49:
 			if 50 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 50 {
-				_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+				_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 				if m.rfc3339 {
 					_widec += 256
 				}
 			}
 		case (m.data)[(m.p)] >= 48:
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if _widec == 562 {
+		if _widec == 1074 {
 			goto st77
 		}
-		if 560 <= _widec && _widec <= 561 {
+		if 1072 <= _widec && _widec <= 1073 {
 			goto st62
 		}
 		goto st0
@@ -29040,12 +29085,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase62:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 560 <= _widec && _widec <= 569 {
+		if 1072 <= _widec && _widec <= 1081 {
 			goto st63
 		}
 		goto st0
@@ -29056,12 +29101,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase63:
 		_widec = int16((m.data)[(m.p)])
 		if 58 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 58 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if _widec == 570 {
+		if _widec == 1082 {
 			goto st64
 		}
 		goto st0
@@ -29072,12 +29117,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase64:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 53 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 560 <= _widec && _widec <= 565 {
+		if 1072 <= _widec && _widec <= 1077 {
 			goto st65
 		}
 		goto st0
@@ -29088,12 +29133,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase65:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 560 <= _widec && _widec <= 569 {
+		if 1072 <= _widec && _widec <= 1081 {
 			goto st66
 		}
 		goto st0
@@ -29104,12 +29149,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase66:
 		_widec = int16((m.data)[(m.p)])
 		if 58 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 58 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if _widec == 570 {
+		if _widec == 1082 {
 			goto st67
 		}
 		goto st0
@@ -29120,12 +29165,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase67:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 53 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 560 <= _widec && _widec <= 565 {
+		if 1072 <= _widec && _widec <= 1077 {
 			goto st68
 		}
 		goto st0
@@ -29136,12 +29181,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase68:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 560 <= _widec && _widec <= 569 {
+		if 1072 <= _widec && _widec <= 1081 {
 			goto st69
 		}
 		goto st0
@@ -29154,30 +29199,30 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		switch {
 		case (m.data)[(m.p)] < 45:
 			if 43 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 43 {
-				_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+				_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 				if m.rfc3339 {
 					_widec += 256
 				}
 			}
 		case (m.data)[(m.p)] > 45:
 			if 90 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 90 {
-				_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+				_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 				if m.rfc3339 {
 					_widec += 256
 				}
 			}
 		default:
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
 		switch _widec {
-		case 555:
+		case 1067:
 			goto st70
-		case 557:
+		case 1069:
 			goto st70
-		case 602:
+		case 1114:
 			goto st75
 		}
 		goto tr88
@@ -29190,21 +29235,21 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		switch {
 		case (m.data)[(m.p)] > 49:
 			if 50 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 50 {
-				_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+				_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 				if m.rfc3339 {
 					_widec += 256
 				}
 			}
 		case (m.data)[(m.p)] >= 48:
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if _widec == 562 {
+		if _widec == 1074 {
 			goto st76
 		}
-		if 560 <= _widec && _widec <= 561 {
+		if 1072 <= _widec && _widec <= 1073 {
 			goto st71
 		}
 		goto tr88
@@ -29215,12 +29260,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase71:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 560 <= _widec && _widec <= 569 {
+		if 1072 <= _widec && _widec <= 1081 {
 			goto st72
 		}
 		goto tr88
@@ -29231,12 +29276,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase72:
 		_widec = int16((m.data)[(m.p)])
 		if 58 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 58 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if _widec == 570 {
+		if _widec == 1082 {
 			goto st73
 		}
 		goto tr88
@@ -29247,12 +29292,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase73:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 53 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 560 <= _widec && _widec <= 565 {
+		if 1072 <= _widec && _widec <= 1077 {
 			goto st74
 		}
 		goto tr88
@@ -29263,12 +29308,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase74:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 560 <= _widec && _widec <= 569 {
+		if 1072 <= _widec && _widec <= 1081 {
 			goto st75
 		}
 		goto tr88
@@ -29291,12 +29336,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase76:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 51 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 560 <= _widec && _widec <= 563 {
+		if 1072 <= _widec && _widec <= 1075 {
 			goto st72
 		}
 		goto tr88
@@ -29307,12 +29352,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase77:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 51 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 560 <= _widec && _widec <= 563 {
+		if 1072 <= _widec && _widec <= 1075 {
 			goto st63
 		}
 		goto st0
@@ -29323,12 +29368,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase78:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 560 <= _widec && _widec <= 569 {
+		if 1072 <= _widec && _widec <= 1081 {
 			goto st60
 		}
 		goto st0
@@ -29339,12 +29384,12 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase79:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 49 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 560 <= _widec && _widec <= 561 {
+		if 1072 <= _widec && _widec <= 1073 {
 			goto st60
 		}
 		goto st0
@@ -29355,16 +29400,16 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	stCase80:
 		_widec = int16((m.data)[(m.p)])
 		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 50 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+			_widec = 768 + (int16((m.data)[(m.p)]) - 0)
 			if m.rfc3339 {
 				_widec += 256
 			}
 		}
-		if 560 <= _widec && _widec <= 562 {
+		if 1072 <= _widec && _widec <= 1074 {
 			goto st57
 		}
 		goto st0
-	tr17:
+	tr18:
 
 		m.pb = m.p
 
@@ -29375,22 +29420,37 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		}
 	stCase81:
 		_widec = int16((m.data)[(m.p)])
-		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
-			if m.rfc3339 {
+		switch {
+		case (m.data)[(m.p)] > 57:
+			if 58 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 58 {
+				_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+				if m.sequence {
+					_widec += 256
+				}
+			}
+		case (m.data)[(m.p)] >= 48:
+			_widec = 1280 + (int16((m.data)[(m.p)]) - 0)
+			if m.sequence {
 				_widec += 256
 			}
+			if m.rfc3339 {
+				_widec += 512
+			}
 		}
-		if _widec == 58 {
-			goto tr62
+		if _widec == 570 {
+			goto tr63
 		}
 		switch {
-		case _widec > 313:
-			if 560 <= _widec && _widec <= 569 {
+		case _widec < 1840:
+			if 1584 <= _widec && _widec <= 1593 {
+				goto st48
+			}
+		case _widec > 1849:
+			if 2096 <= _widec && _widec <= 2105 {
 				goto st82
 			}
-		case _widec >= 304:
-			goto st48
+		default:
+			goto st52
 		}
 		goto st0
 	st82:
@@ -29399,22 +29459,37 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		}
 	stCase82:
 		_widec = int16((m.data)[(m.p)])
-		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
-			if m.rfc3339 {
+		switch {
+		case (m.data)[(m.p)] > 57:
+			if 58 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 58 {
+				_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+				if m.sequence {
+					_widec += 256
+				}
+			}
+		case (m.data)[(m.p)] >= 48:
+			_widec = 1280 + (int16((m.data)[(m.p)]) - 0)
+			if m.sequence {
 				_widec += 256
 			}
+			if m.rfc3339 {
+				_widec += 512
+			}
 		}
-		if _widec == 58 {
-			goto tr62
+		if _widec == 570 {
+			goto tr63
 		}
 		switch {
-		case _widec > 313:
-			if 560 <= _widec && _widec <= 569 {
+		case _widec < 1840:
+			if 1584 <= _widec && _widec <= 1593 {
+				goto st48
+			}
+		case _widec > 1849:
+			if 2096 <= _widec && _widec <= 2105 {
 				goto st83
 			}
-		case _widec >= 304:
-			goto st48
+		default:
+			goto st53
 		}
 		goto st0
 	st83:
@@ -29423,22 +29498,37 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		}
 	stCase83:
 		_widec = int16((m.data)[(m.p)])
-		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
-			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
-			if m.rfc3339 {
+		switch {
+		case (m.data)[(m.p)] > 57:
+			if 58 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 58 {
+				_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+				if m.sequence {
+					_widec += 256
+				}
+			}
+		case (m.data)[(m.p)] >= 48:
+			_widec = 1280 + (int16((m.data)[(m.p)]) - 0)
+			if m.sequence {
 				_widec += 256
 			}
+			if m.rfc3339 {
+				_widec += 512
+			}
 		}
-		if _widec == 58 {
-			goto tr62
+		if _widec == 570 {
+			goto tr63
 		}
 		switch {
-		case _widec > 313:
-			if 560 <= _widec && _widec <= 569 {
+		case _widec < 1840:
+			if 1584 <= _widec && _widec <= 1593 {
+				goto st48
+			}
+		case _widec > 1849:
+			if 2096 <= _widec && _widec <= 2105 {
 				goto st84
 			}
-		case _widec >= 304:
-			goto st48
+		default:
+			goto st54
 		}
 		goto st0
 	st84:
@@ -29447,19 +29537,34 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		}
 	stCase84:
 		_widec = int16((m.data)[(m.p)])
-		if 45 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 45 {
+		switch {
+		case (m.data)[(m.p)] < 48:
+			if 45 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 45 {
+				_widec = 768 + (int16((m.data)[(m.p)]) - 0)
+				if m.rfc3339 {
+					_widec += 256
+				}
+			}
+		case (m.data)[(m.p)] > 57:
+			if 58 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 58 {
+				_widec = 256 + (int16((m.data)[(m.p)]) - 0)
+				if m.sequence {
+					_widec += 256
+				}
+			}
+		default:
 			_widec = 256 + (int16((m.data)[(m.p)]) - 0)
-			if m.rfc3339 {
+			if m.sequence {
 				_widec += 256
 			}
 		}
 		switch _widec {
-		case 58:
-			goto tr62
-		case 557:
+		case 570:
+			goto tr63
+		case 1069:
 			goto st55
 		}
-		if 48 <= _widec && _widec <= 57 {
+		if 560 <= _widec && _widec <= 569 {
 			goto st48
 		}
 		goto st0

@@ -154,7 +154,7 @@ hostname = (hostnamerange -- ':') >mark %set_hostname $err(err_hostname);
 # Cisco devices include a "sequence number" before the timestamp
 # "<189>237: *Jan  8 19:46:03.295..."
 sequenceval = (digit+) >mark %set_sequence @err(err_sequence);
-sequence = sequenceval ':' sp* '*';
+sequence = (sequenceval ':' sp* '*') when { m.sequence };
 
 # Section 4.1.3
 # note > alnum{1,32} is too restrictive (eg., no dashes)
@@ -193,6 +193,7 @@ type machine struct {
 	bestEffort   bool
 	yyyy         int
 	rfc3339      bool
+	sequence     bool
 	loc          *time.Location
 	timezone     *time.Location
 }
@@ -244,6 +245,13 @@ func (m *machine) WithLocaleTimezone(loc *time.Location) {
 // Notice this does not disable the default and correct timestamps - ie., Stamp timestamps.
 func (m *machine) WithRFC3339() {
 	m.rfc3339 = true
+}
+
+// WithSequence enables parsing of non-standard Cisco iOS logs that include a sequence number.
+//
+// See https://www.cisco.com/c/en/us/td/docs/routers/access/wireless/software/guide/SysMsgLogging.html#wp1054751
+func (m *machine) WithSequence() {
+	m.sequence = true
 }
 
 // Err returns the error that occurred on the last call to Parse.

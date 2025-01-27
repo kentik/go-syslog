@@ -66,3 +66,10 @@ func WithRFC3339() syslog.MachineOption {
 		return m
 	}
 }
+
+func WithSequence() syslog.MachineOption {
+	return func(m syslog.Machine) syslog.Machine {
+		m.(*machine).WithSequence()
+		return m
+	}
+}
