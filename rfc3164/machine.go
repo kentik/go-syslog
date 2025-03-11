@@ -2493,12 +2493,19 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 			goto _testEof19
 		}
 	stCase19:
-		switch (m.data)[(m.p)] {
+		_widec = int16((m.data)[(m.p)])
+		if 58 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 58 {
+			_widec = 2304 + (int16((m.data)[(m.p)]) - 0)
+			if m.sequence {
+				_widec += 256
+			}
+		}
+		switch _widec {
 		case 32:
 			goto tr38
 		case 46:
 			goto st21
-		case 58:
+		case 2618:
 			goto tr41
 		}
 		goto st0
@@ -28413,13 +28420,20 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 			goto _testEof22
 		}
 	stCase22:
-		switch (m.data)[(m.p)] {
+		_widec = int16((m.data)[(m.p)])
+		if 58 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 58 {
+			_widec = 2304 + (int16((m.data)[(m.p)]) - 0)
+			if m.sequence {
+				_widec += 256
+			}
+		}
+		switch _widec {
 		case 32:
 			goto tr38
-		case 58:
+		case 2618:
 			goto tr41
 		}
-		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
+		if 48 <= _widec && _widec <= 57 {
 			goto st23
 		}
 		goto st0
@@ -28428,13 +28442,20 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 			goto _testEof23
 		}
 	stCase23:
-		switch (m.data)[(m.p)] {
+		_widec = int16((m.data)[(m.p)])
+		if 58 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 58 {
+			_widec = 2304 + (int16((m.data)[(m.p)]) - 0)
+			if m.sequence {
+				_widec += 256
+			}
+		}
+		switch _widec {
 		case 32:
 			goto tr38
-		case 58:
+		case 2618:
 			goto tr41
 		}
-		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
+		if 48 <= _widec && _widec <= 57 {
 			goto st24
 		}
 		goto st0
@@ -28443,13 +28464,20 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 			goto _testEof24
 		}
 	stCase24:
-		switch (m.data)[(m.p)] {
+		_widec = int16((m.data)[(m.p)])
+		if 58 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 58 {
+			_widec = 2304 + (int16((m.data)[(m.p)]) - 0)
+			if m.sequence {
+				_widec += 256
+			}
+		}
+		switch _widec {
 		case 32:
 			goto tr38
-		case 58:
+		case 2618:
 			goto tr41
 		}
-		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
+		if 48 <= _widec && _widec <= 57 {
 			goto st25
 		}
 		goto st0
@@ -28458,13 +28486,20 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 			goto _testEof25
 		}
 	stCase25:
-		switch (m.data)[(m.p)] {
+		_widec = int16((m.data)[(m.p)])
+		if 58 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 58 {
+			_widec = 2304 + (int16((m.data)[(m.p)]) - 0)
+			if m.sequence {
+				_widec += 256
+			}
+		}
+		switch _widec {
 		case 32:
 			goto tr38
-		case 58:
+		case 2618:
 			goto tr41
 		}
-		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
+		if 48 <= _widec && _widec <= 57 {
 			goto st26
 		}
 		goto st0
@@ -28473,13 +28508,20 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 			goto _testEof26
 		}
 	stCase26:
-		switch (m.data)[(m.p)] {
+		_widec = int16((m.data)[(m.p)])
+		if 58 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 58 {
+			_widec = 2304 + (int16((m.data)[(m.p)]) - 0)
+			if m.sequence {
+				_widec += 256
+			}
+		}
+		switch _widec {
 		case 32:
 			goto tr38
-		case 58:
+		case 2618:
 			goto tr41
 		}
-		if 48 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 57 {
+		if 48 <= _widec && _widec <= 57 {
 			goto st27
 		}
 		goto st0
@@ -28488,10 +28530,17 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 			goto _testEof27
 		}
 	stCase27:
-		switch (m.data)[(m.p)] {
+		_widec = int16((m.data)[(m.p)])
+		if 58 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 58 {
+			_widec = 2304 + (int16((m.data)[(m.p)]) - 0)
+			if m.sequence {
+				_widec += 256
+			}
+		}
+		switch _widec {
 		case 32:
 			goto tr38
-		case 58:
+		case 2618:
 			goto tr41
 		}
 		goto st0
@@ -28789,7 +28838,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 		goto st0
 	tr63:
 
-		output.sequence = common.UnsafeUTF8DecimalCodePointsToInt(m.text())
+		output.sequence = uint32(common.UnsafeUTF8DecimalCodePointsToInt(m.text()))
 		output.sequenceSet = true
 
 		goto st49
@@ -29322,10 +29371,17 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 			goto _testEof75
 		}
 	stCase75:
-		switch (m.data)[(m.p)] {
+		_widec = int16((m.data)[(m.p)])
+		if 58 <= (m.data)[(m.p)] && (m.data)[(m.p)] <= 58 {
+			_widec = 2304 + (int16((m.data)[(m.p)]) - 0)
+			if m.sequence {
+				_widec += 256
+			}
+		}
+		switch _widec {
 		case 32:
 			goto tr96
-		case 58:
+		case 2618:
 			goto tr97
 		}
 		goto st0
