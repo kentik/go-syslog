@@ -390,6 +390,21 @@ var testCases = []testCase{
 			},
 		},
 	},
+	{
+		input: []byte(`May 28 00:35:45 MSP CEF:0|Ubiquiti|UniFi Network|9.1.120|Admin Activity|Admin Accessed UniFi Network|1|msg=XXX opened UniFi Network via the iOS mobile app.`),
+		valid: true,
+		value: &SyslogMessage{
+			Base: syslog.Base{
+				Priority:  syslogtesting.Uint8Address(0),
+				Facility:  syslogtesting.Uint8Address(0),
+				Severity:  syslogtesting.Uint8Address(0),
+				Timestamp: syslogtesting.TimeParse(time.Stamp, "May 28 00:35:45"),
+				Hostname:  syslogtesting.StringAddress("MSP"),
+				Appname:   syslogtesting.StringAddress("CEF"),
+				Message:   syslogtesting.StringAddress("CEF:0|Ubiquiti|UniFi Network|9.1.120|Admin Activity|Admin Accessed UniFi Network|1|msg=XXX opened UniFi Network via the iOS mobile app."),
+			},
+		},
+	},
 	// todo > other test cases pleaaaase
 }
 
