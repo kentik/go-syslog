@@ -56,6 +56,11 @@ action set_timestamp {
 	}
 }
 
+action set_meraki_timestamp {
+    fmt.Println("DEBUG: set_meraki_timestamp")
+	fmt.Println("DEBUG: WTF")
+}
+
 action set_rfc3339 {
 	if t, e := time.Parse(time.RFC3339, string(m.text())); e != nil {
 		m.err = fmt.Errorf("%s [col %d]", e, m.p)
@@ -107,6 +112,16 @@ action err_pri {
 
 action err_timestamp {
 	m.err = fmt.Errorf(errTimestamp, m.p)
+	fhold;
+	fgoto fail;
+}
+
+action do_merakidigit {
+	fmt.Println("DEBUG: do_merakidigit")
+}
+
+action err_meraki_timestamp {
+	m.err = fmt.Errorf("meraki " + errTimestamp, m.p)
 	fhold;
 	fgoto fail;
 }
@@ -183,6 +198,12 @@ ciscocolon = (':'?) when { m.msgcount || m.sequence || m.ciscoHostname };
 
 ciscoextras = msgcount? <: sequence? <: ciscoHostname?;
 
+# Meraki devices generate syslog messages with a different format altogether.
+merakidigit = ('1');
+# merakidigit = '1'? >mark %do_merakidigit;
+
+merakitime = (digit+ timesecfrac) >mark %set_meraki_timestamp @err(err_meraki_timestamp);
+
 # Section 4.1.3
 # note > alnum{1,32} is too restrictive (eg., no dashes)
 # note > see https://tools.ietf.org/html/rfc2234#section-2.1 for an interpretation of "ABNF alphanumeric" as stated by RFC 3164 regarding the tag
@@ -205,7 +226,8 @@ fail := (any - [\n\r])* @err{ fgoto main; };
 
 # note > some BSD syslog implementations insert extra spaces between "PRI", "Timestamp", and "Hostname": although these strictly violate RFC3164, it is useful to be able to parse them
 # note > OpenBSD like many other hardware sends syslog messages without hostname
-main := pri? <: sp* ciscoextras ciscostar (timestamp | (rfc3339 when { m.rfc3339 })) ciscocolon sp+ (hostname sp+)? msg '\n'?;
+# main := pri? <: sp* ciscoextras ciscostar (timestamp | (rfc3339 when { m.rfc3339 })) ciscocolon sp+ (hostname sp+)? msg '\n'?;
+main := pri? <: merakidigit? sp* ciscoextras ciscostar (timestamp | (rfc3339 when { m.rfc3339 }) | merakitime) ciscocolon sp+ (hostname sp+)? msg '\n'?;
 
 }%%
 
