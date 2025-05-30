@@ -427,7 +427,6 @@ func TestMachineParse(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(syslogtesting.RightPad(string(tc.input), 50), func(t *testing.T) {
-			// t.Parallel()
 
 			m := NewMachine(tc.opts...)
 			message, merr := m.Parse(tc.input)
