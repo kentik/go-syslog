@@ -406,17 +406,16 @@ var testCases = []testCase{
 		},
 	},
 	{
-		input: []byte(`<134>1 1748625507.245081376 MX68W events dhcp no offers for mac 6C:7F:0C:BC:23:7B`),
+		input: []byte(`<189>1 1748625507.245081376 MX68W events dhcp no offers for mac 6C:7F:0C:BC:23:7B`),
 		valid: true,
 		value: &SyslogMessage{
 			Base: syslog.Base{
 				Priority:  syslogtesting.Uint8Address(189),
 				Facility:  syslogtesting.Uint8Address(23),
 				Severity:  syslogtesting.Uint8Address(5),
-				Timestamp: syslogtesting.TimeParse(time.Stamp, "May 30 17:18:27"),
+				Timestamp: syslogtesting.TimeParse(time.Stamp, "May 30 17:18:27 2025"),
 				Hostname:  syslogtesting.StringAddress("MX68W"),
-				Appname:   syslogtesting.StringAddress("events"),
-				Message:   syslogtesting.StringAddress(" events dhcp no offers for mac 6C:7F:0C:BC:23:7B"),
+				Message:   syslogtesting.StringAddress("events dhcp no offers for mac 6C:7F:0C:BC:23:7B"),
 			},
 		},
 	},

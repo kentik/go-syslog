@@ -3,6 +3,8 @@ package rfc3164
 import (
 	"fmt"
 	"time"
+	"strings"
+	"strconv"
 
 	"github.com/leodido/go-syslog/v4"
 	"github.com/leodido/go-syslog/v4/common"
@@ -57,7 +59,43 @@ action set_timestamp {
 }
 
 action set_meraki_timestamp {
-    fmt.Println("--------------------------- DEBUG: set_meraki_timestamp")
+	{
+		tsString := string(m.data[m.pb:m.p])
+		tokens := strings.Split(tsString, ".")
+		if len(tokens) != 2 {
+			m.err = fmt.Errorf("meraki timestamp should have two parts [col %d]", m.p)
+			fhold;
+			fgoto fail;
+		}
+
+		seconds, err := strconv.ParseInt(tokens[0], 10, 64)
+		if err != nil {
+			m.err = fmt.Errorf("meraki timestamp seconds part is not a valid integer: %s [col %d]", err, m.p)
+			fhold;
+			fgoto fail;
+		}
+		if seconds < 0 {
+			m.err = fmt.Errorf("meraki timestamp seconds part should be a positive integer [col %d]", m.p)
+			fhold;
+			fgoto fail;
+		}
+
+		t := time.Unix(seconds, 0)
+		output.timestamp = t
+
+		if m.loc != nil {
+			output.timestamp = output.timestamp.In(m.loc)
+		}
+		if m.timezone != nil {
+			output.timestamp, err = time.ParseInLocation(
+				time.Stamp,
+				output.timestamp.Format(time.Stamp),
+				m.timezone,
+			)
+		}
+
+		output.timestampSet = true
+    }
 }
 
 action set_rfc3339 {
@@ -193,12 +231,6 @@ ciscocolon = (':'?) when { m.msgcount || m.sequence || m.ciscoHostname };
 
 ciscoextras = msgcount? <: sequence? <: ciscoHostname?;
 
-# Meraki devices generate syslog messages with a different format altogether.
-merakidigit = ('1');
-# merakidigit = '1'? >mark %do_merakidigit;
-
-merakitime = (digit+ '.' digit+) >mark %set_meraki_timestamp @err(err_meraki_timestamp);
-
 # Section 4.1.3
 # note > alnum{1,32} is too restrictive (eg., no dashes)
 # note > see https://tools.ietf.org/html/rfc2234#section-2.1 for an interpretation of "ABNF alphanumeric" as stated by RFC 3164 regarding the tag
@@ -219,10 +251,14 @@ msg = (tag content? ':' sp)? mex;
 
 fail := (any - [\n\r])* @err{ fgoto main; };
 
+# Meraki devices generate syslog messages with a different format altogether.
+merakidigit = ('1');
+merakitime = (digit+ '.' digit+) >mark %set_meraki_timestamp @err(err_meraki_timestamp);
+meraki = merakidigit sp merakitime sp+ (hostname sp+)? msg '\n'?;
+
 # note > some BSD syslog implementations insert extra spaces between "PRI", "Timestamp", and "Hostname": although these strictly violate RFC3164, it is useful to be able to parse them
 # note > OpenBSD like many other hardware sends syslog messages without hostname
-main := pri? <: sp* ciscoextras ciscostar (timestamp | (rfc3339 when { m.rfc3339 })) ciscocolon sp+ (hostname sp+)? msg '\n'?;
-# main := pri? <: (merakidigit? | sp* ciscoextras ciscostar) (timestamp | (rfc3339 when { m.rfc3339 })) ciscocolon sp+ (hostname sp+)? msg '\n'?;
+main := pri? <: (meraki | sp* ciscoextras ciscostar (timestamp | (rfc3339 when { m.rfc3339 })) ciscocolon sp+ (hostname sp+)? msg '\n'?);
 
 }%%
 
