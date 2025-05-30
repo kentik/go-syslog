@@ -56,23 +56,6 @@ action set_timestamp {
 	}
 }
 
-action set_merakitimestamp {
-	if t, e := time.Parse(time.Stamp, string(m.text())); e != nil {
-		m.err = fmt.Errorf("%s [col %d]", e, m.p)
-		fhold;
-		fgoto fail;
-	} else {
-		if m.timezone != nil {
-			t, _ = time.ParseInLocation(time.Stamp, string(m.text()), m.timezone)
-		}
-		output.timestamp = t.AddDate(m.yyyy, 0, 0)
-		if m.loc != nil {
-			output.timestamp = output.timestamp.In(m.loc)
-		}
-		output.timestampSet = true
-	}
-}
-
 action set_rfc3339 {
 	if t, e := time.Parse(time.RFC3339, string(m.text())); e != nil {
 		m.err = fmt.Errorf("%s [col %d]", e, m.p)
@@ -123,12 +106,6 @@ action err_pri {
 }
 
 action err_timestamp {
-	m.err = fmt.Errorf(errTimestamp, m.p)
-	fhold;
-	fgoto fail;
-}
-
-action err_merakitimestamp {
 	m.err = fmt.Errorf(errTimestamp, m.p)
 	fhold;
 	fgoto fail;
@@ -226,12 +203,9 @@ msg = (tag content? ':' sp)? mex;
 
 fail := (any - [\n\r])* @err{ fgoto main; };
 
-merakicrap = (digit+)
-merakitime = (digit+ timesecfrac) >mark %set_merakitimestamp @err(err_meraki_timestamp);
-
 # note > some BSD syslog implementations insert extra spaces between "PRI", "Timestamp", and "Hostname": although these strictly violate RFC3164, it is useful to be able to parse them
 # note > OpenBSD like many other hardware sends syslog messages without hostname
-main := pri? <: merakicrap? sp* ciscoextras ciscostar (timestamp | (rfc3339 when { m.rfc3339 }) | merakitime) ciscocolon sp+ (hostname sp+)? msg '\n'?;
+main := pri? <: sp* ciscoextras ciscostar (timestamp | (rfc3339 when { m.rfc3339 })) ciscocolon sp+ (hostname sp+)? msg '\n'?;
 
 }%%
 
