@@ -80,23 +80,9 @@ action set_meraki_timestamp {
 			fgoto fail;
 		}
 
+		// Unix timestamps are always in UTC so we ignore any of the timezone/location settings.
 		t := time.Unix(seconds, 0)
-		output.timestamp = t
-		// fmt.Printf("DEBUG: meraki timestamp parsed as %s\n", output.timestamp)
-
-		if m.loc != nil {
-			output.timestamp = output.timestamp.In(m.loc)
-			// fmt.Printf("DEBUG: meraki timestamp converted to location %s as %s\n", m.loc, output.timestamp)
-		}
-		if m.timezone != nil {
-			output.timestamp, err = time.ParseInLocation(
-				time.Stamp,
-				output.timestamp.Format(time.Stamp),
-				m.timezone,
-			)
-			// fmt.Printf("DEBUG: meraki timestamp parsed in timezone %s as %s\n", m.timezone, output.timestamp)
-		}
-
+		output.timestamp = t.UTC()
 		output.timestampSet = true
 	}
 }
