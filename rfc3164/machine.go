@@ -3830,9 +3830,11 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 
 			t := time.Unix(seconds, 0)
 			output.timestamp = t
+			// fmt.Printf("DEBUG: meraki timestamp parsed as %s\n", output.timestamp)
 
 			if m.loc != nil {
 				output.timestamp = output.timestamp.In(m.loc)
+				// fmt.Printf("DEBUG: meraki timestamp converted to location %s as %s\n", m.loc, output.timestamp)
 			}
 			if m.timezone != nil {
 				output.timestamp, err = time.ParseInLocation(
@@ -3840,6 +3842,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 					output.timestamp.Format(time.Stamp),
 					m.timezone,
 				)
+				// fmt.Printf("DEBUG: meraki timestamp parsed in timezone %s as %s\n", m.timezone, output.timestamp)
 			}
 
 			output.timestampSet = true

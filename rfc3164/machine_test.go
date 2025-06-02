@@ -413,7 +413,7 @@ var testCases = []testCase{
 				Priority:  syslogtesting.Uint8Address(189),
 				Facility:  syslogtesting.Uint8Address(23),
 				Severity:  syslogtesting.Uint8Address(5),
-				Timestamp: syslogtesting.TimeParse(time.Stamp, "May 30 17:18:27 2025"),
+				Timestamp: syslogtesting.TimeParse(time.DateTime, "2025-05-30 17:18:27"),
 				Hostname:  syslogtesting.StringAddress("MX68W"),
 				Message:   syslogtesting.StringAddress("events dhcp no offers for mac 6C:7F:0C:BC:23:7B"),
 			},
