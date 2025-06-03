@@ -3,8 +3,6 @@ package rfc3164
 import (
 	"fmt"
 	"time"
-	"strings"
-	"strconv"
 
 	"github.com/leodido/go-syslog/v4"
 	"github.com/leodido/go-syslog/v4/common"
@@ -54,35 +52,6 @@ action set_timestamp {
 		if m.loc != nil {
 			output.timestamp = output.timestamp.In(m.loc)
 		}
-		output.timestampSet = true
-	}
-}
-
-action set_meraki_timestamp {
-	{
-		tsString := string(m.data[m.pb:m.p])
-		tokens := strings.Split(tsString, ".")
-		if len(tokens) != 2 {
-			m.err = fmt.Errorf("meraki timestamp should have two parts [col %d]", m.p)
-			fhold;
-			fgoto fail;
-		}
-
-		seconds, err := strconv.ParseInt(tokens[0], 10, 64)
-		if err != nil {
-			m.err = fmt.Errorf("meraki timestamp seconds part is not a valid integer: %s [col %d]", err, m.p)
-			fhold;
-			fgoto fail;
-		}
-		if seconds < 0 {
-			m.err = fmt.Errorf("meraki timestamp seconds part should be a positive integer [col %d]", m.p)
-			fhold;
-			fgoto fail;
-		}
-
-		// Unix timestamps are always in UTC so we ignore any of the timezone/location settings.
-		t := time.Unix(seconds, 0)
-		output.timestamp = t.UTC()
 		output.timestampSet = true
 	}
 }
@@ -138,12 +107,6 @@ action err_pri {
 
 action err_timestamp {
 	m.err = fmt.Errorf(errTimestamp, m.p)
-	fhold;
-	fgoto fail;
-}
-
-action err_meraki_timestamp {
-	m.err = fmt.Errorf("meraki " + errTimestamp, m.p)
 	fhold;
 	fgoto fail;
 }
@@ -240,14 +203,9 @@ msg = (tag content? ':' sp)? mex;
 
 fail := (any - [\n\r])* @err{ fgoto main; };
 
-# Meraki devices generate syslog messages with a different format altogether.
-merakidigit = ('1');
-merakitime = (digit+ '.' digit+) >mark %set_meraki_timestamp @err(err_meraki_timestamp);
-meraki = merakidigit sp merakitime sp+ (hostname sp+)? msg '\n'?;
-
 # note > some BSD syslog implementations insert extra spaces between "PRI", "Timestamp", and "Hostname": although these strictly violate RFC3164, it is useful to be able to parse them
 # note > OpenBSD like many other hardware sends syslog messages without hostname
-main := pri? <: (meraki | sp* ciscoextras ciscostar (timestamp | (rfc3339 when { m.rfc3339 })) ciscocolon sp+ (hostname sp+)? msg '\n'?);
+main := pri? <: sp* ciscoextras ciscostar (timestamp | (rfc3339 when { m.rfc3339 })) ciscocolon sp+ (hostname sp+)? msg '\n'?;
 
 }%%
 

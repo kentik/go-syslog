@@ -1354,6 +1354,19 @@ y`),
 		fmt.Sprintf(ErrParse+ColumnPositionTemplate, 7),
 		(&SyslogMessage{}).SetVersion(10).SetPriority(1),
 	},
+	// Valid meraki with epoch timestampe
+	{
+		[]byte(`<189>1 1748625507.245081376 MX68W events dhcp no offers for mac 6C:7F:0C:BC:23:7B`),
+		true,
+		(&SyslogMessage{}).
+			SetVersion(1).
+			SetMessage("events dhcp no offers for mac 6C:7F:0C:BC:23:7B").
+			SetTimestamp("2025-05-30T17:18:27.0Z").
+			SetHostname("MX68W").
+			SetPriority(189),
+		"",
+		nil,
+	},
 }
 
 var nonCompliantMsgTestCases = []testCase{

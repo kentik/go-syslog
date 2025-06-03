@@ -3,6 +3,8 @@ package rfc5424
 import (
 	"time"
 	"fmt"
+	"strings"
+	"strconv"
 
 	"github.com/leodido/go-syslog/v4"
 	"github.com/leodido/go-syslog/v4/common"
@@ -90,6 +92,37 @@ action set_timestamp {
 		fgoto fail;
 	} else {
 		output.timestamp = t
+		output.timestampSet = true
+	}
+}
+
+action set_meraki_timestamp {
+	{
+		tsString := string(m.data[m.pb:m.p])
+		tokens := strings.Split(tsString, ".")
+		fmt.Printf("DEBUG: tokesn=%+v\n", tokens)
+		if len(tokens) != 2 {
+			// m.err = fmt.Errorf("meraki timestamp should have two parts [col %d]", m.p)
+			fhold;
+			fgoto fail;
+		}
+
+		seconds, err := strconv.ParseInt(tokens[0], 10, 64)
+		fmt.Printf("DEBUG: seconds=%d\n", seconds)
+		if err != nil {
+			// m.err = fmt.Errorf("meraki timestamp seconds part is not a valid integer: %s [col %d]", err, m.p)
+			fhold;
+			fgoto fail;
+		}
+		if seconds < 0 {
+			// m.err = fmt.Errorf("meraki timestamp seconds part should be a positive integer [col %d]", m.p)
+			fhold;
+			fgoto fail;
+		}
+
+		// Unix timestamps are always in UTC so we ignore any of the timezone/location settings.
+		t := time.Unix(seconds, 0)
+		output.timestamp = t.UTC()
 		output.timestampSet = true
 	}
 }
@@ -261,6 +294,13 @@ action err_parse {
 	fgoto fail;
 }
 
+
+action err_meraki_timestamp {
+	m.err = fmt.Errorf(ErrParse + ColumnPositionTemplate, m.p)
+	fhold;
+	fgoto fail;
+}
+
 nilvalue = '-';
 
 pri = ('<' prival >mark %from(set_prival) $err(err_prival) '>') @err(err_pri);
@@ -277,7 +317,12 @@ procid = procidrange >mark %set_procid $err(err_procid);
 
 msgid = msgidrange >mark %set_msgid $err(err_msgid);
 
+# Meraki devices generate syslog messages with a different format altogether.
+merakitime = (digit+ '.' digit+) >mark %set_meraki_timestamp @err(err_meraki_timestamp);
+
 header = (pri version sp timestamp sp hostname sp appname sp procid sp msgid) <>err(err_parse);
+
+meraki_header = (pri version sp merakitime sp hostname) <>err(err_parse);
 
 # \", \], \\
 escapes = (bs >add_slash toescape) $err(err_escape);
@@ -309,7 +354,13 @@ msg = any? @select_msg_mode;
 
 fail := (any - [\n\r])* @err{ fgoto main; };
 
-main := header sp structureddata (sp msg)? $err(err_parse);
+# Parser for the RFC standard
+standard = header sp structureddata (sp msg)?;
+
+# Meraki parser
+meraki = meraki_header sp msg?;
+
+main := (standard | meraki ) $err(err_parse);
 
 }%%
 
