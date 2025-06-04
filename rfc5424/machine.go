@@ -9788,7 +9788,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	tr588:
 
 		{
-			tsString := string(m.data[m.pb:m.p])
+			tsString := string(m.text())
 			tokens := strings.Split(tsString, ".")
 			if len(tokens) != 2 {
 				m.err = fmt.Errorf("meraki timestamp should have two parts [col %d]", m.p)
