@@ -100,22 +100,20 @@ action set_meraki_timestamp {
 	{
 		tsString := string(m.data[m.pb:m.p])
 		tokens := strings.Split(tsString, ".")
-		fmt.Printf("DEBUG: tokesn=%+v\n", tokens)
 		if len(tokens) != 2 {
-			// m.err = fmt.Errorf("meraki timestamp should have two parts [col %d]", m.p)
+			m.err = fmt.Errorf("meraki timestamp should have two parts [col %d]", m.p)
 			fhold;
 			fgoto fail;
 		}
 
 		seconds, err := strconv.ParseInt(tokens[0], 10, 64)
-		fmt.Printf("DEBUG: seconds=%d\n", seconds)
 		if err != nil {
-			// m.err = fmt.Errorf("meraki timestamp seconds part is not a valid integer: %s [col %d]", err, m.p)
+			m.err = fmt.Errorf("meraki timestamp seconds part is not a valid integer: %s [col %d]", err, m.p)
 			fhold;
 			fgoto fail;
 		}
 		if seconds < 0 {
-			// m.err = fmt.Errorf("meraki timestamp seconds part should be a positive integer [col %d]", m.p)
+			m.err = fmt.Errorf("meraki timestamp seconds part should be a positive integer [col %d]", m.p)
 			fhold;
 			fgoto fail;
 		}
