@@ -98,6 +98,17 @@ action set_timestamp {
 
 action set_meraki_timestamp {
 	{
+		parseToInt := func(input, timeComponent string) (int64, error) {
+			result, err := strconv.ParseInt(input, 10, 64)
+			if err != nil {
+				return 0, fmt.Errorf("meraki timestamp component is not a valid integer; timeComponent=%s; input=%s", timeComponent, input)
+			}
+			if result < 0 {
+				return 0, fmt.Errorf("meraki timestamp component should not be a negative integer; timeComponent=%s; input=%s", timeComponent, input)
+			}
+			return result, err
+		}
+
 		tsString := string(m.text())
 		tokens := strings.Split(tsString, ".")
 		if len(tokens) != 2 {
@@ -106,20 +117,19 @@ action set_meraki_timestamp {
 			fgoto fail;
 		}
 
-		seconds, err := strconv.ParseInt(tokens[0], 10, 64)
+		seconds, err := parseToInt(tokens[0], "seconds")
 		if err != nil {
-			m.err = fmt.Errorf("meraki timestamp seconds part is not a valid integer: %s [col %d]", err, m.p)
-			fhold;
-			fgoto fail;
-		}
-		if seconds < 0 {
-			m.err = fmt.Errorf("meraki timestamp seconds part should be a positive integer [col %d]", m.p)
+			m.err = fmt.Errorf("parsing meraki timestamp seconds; %s [col %d]", err, m.p)
 			fhold;
 			fgoto fail;
 		}
 
+		// If we get an error parsing this data there is no reason to throw the message out because we
+		// at least have a timestamp with second granularity
+		nanos, _ := parseToInt(tokens[1], "nanos")
+
 		// Unix timestamps are always in UTC so we ignore any of the timezone/location settings.
-		t := time.Unix(seconds, 0)
+		t := time.Unix(seconds, nanos)
 		output.timestamp = t.UTC()
 		output.timestampSet = true
 	}
