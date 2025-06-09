@@ -3,6 +3,8 @@ package rfc5424
 import (
 	"time"
 	"fmt"
+	"strings"
+	"strconv"
 
 	"github.com/leodido/go-syslog/v4"
 	"github.com/leodido/go-syslog/v4/common"
@@ -90,6 +92,45 @@ action set_timestamp {
 		fgoto fail;
 	} else {
 		output.timestamp = t
+		output.timestampSet = true
+	}
+}
+
+action set_meraki_timestamp {
+	{
+		parseToInt := func(input, timeComponent string) (int64, error) {
+			result, err := strconv.ParseInt(input, 10, 64)
+			if err != nil {
+				return 0, fmt.Errorf("meraki timestamp component is not a valid integer; timeComponent=%s; input=%s", timeComponent, input)
+			}
+			if result < 0 {
+				return 0, fmt.Errorf("meraki timestamp component should not be a negative integer; timeComponent=%s; input=%s", timeComponent, input)
+			}
+			return result, err
+		}
+
+		tsString := string(m.text())
+		tokens := strings.Split(tsString, ".")
+		if len(tokens) != 2 {
+			m.err = fmt.Errorf("meraki timestamp should have two parts [col %d]", m.p)
+			fhold;
+			fgoto fail;
+		}
+
+		seconds, err := parseToInt(tokens[0], "seconds")
+		if err != nil {
+			m.err = fmt.Errorf("parsing meraki timestamp seconds; %s [col %d]", err, m.p)
+			fhold;
+			fgoto fail;
+		}
+
+		// If we get an error parsing this data there is no reason to throw the message out because we
+		// at least have a timestamp with second granularity
+		nanos, _ := parseToInt(tokens[1], "nanos")
+
+		// Unix timestamps are always in UTC so we ignore any of the timezone/location settings.
+		t := time.Unix(seconds, nanos)
+		output.timestamp = t.UTC()
 		output.timestampSet = true
 	}
 }
@@ -261,6 +302,13 @@ action err_parse {
 	fgoto fail;
 }
 
+
+action err_meraki_timestamp {
+	m.err = fmt.Errorf(ErrParse + ColumnPositionTemplate, m.p)
+	fhold;
+	fgoto fail;
+}
+
 nilvalue = '-';
 
 pri = ('<' prival >mark %from(set_prival) $err(err_prival) '>') @err(err_pri);
@@ -277,7 +325,12 @@ procid = procidrange >mark %set_procid $err(err_procid);
 
 msgid = msgidrange >mark %set_msgid $err(err_msgid);
 
+# Meraki devices generate syslog messages with a different format altogether.
+merakitime = (digit+ '.' digit+) >mark %set_meraki_timestamp @err(err_meraki_timestamp);
+
 header = (pri version sp timestamp sp hostname sp appname sp procid sp msgid) <>err(err_parse);
+
+meraki_header = (pri version sp merakitime sp hostname) <>err(err_parse);
 
 # \", \], \\
 escapes = (bs >add_slash toescape) $err(err_escape);
@@ -309,7 +362,13 @@ msg = any? @select_msg_mode;
 
 fail := (any - [\n\r])* @err{ fgoto main; };
 
-main := header sp structureddata (sp msg)? $err(err_parse);
+# Parser for the RFC standard
+standard = header sp structureddata (sp msg)?;
+
+# Meraki parser
+meraki = meraki_header sp msg?;
+
+main := (standard | meraki ) $err(err_parse);
 
 }%%
 
