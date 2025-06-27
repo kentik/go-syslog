@@ -424,6 +424,25 @@ var testCases = []testCase{
 			},
 		},
 	},
+	{
+		opts: []syslog.MachineOption{
+			WithCiscoIOSComponents(ciscoios.All),
+		},
+		input: []byte(`<45>21602: 420-ext-01: Jun 16 18:53:12.105: %SYS-5-CONFIG_I: Configured from console by asdfasdf on vty0 (1.2.3.4)`),
+		valid: true,
+		value: &SyslogMessage{
+			Base: syslog.Base{
+				Priority:       syslogtesting.Uint8Address(45),
+				Facility:       syslogtesting.Uint8Address(5),
+				Severity:       syslogtesting.Uint8Address(5),
+				MessageCounter: syslogtesting.Uint32Address(21602),
+				Timestamp:      syslogtesting.TimeParse(time.Stamp, "Jun 16 18:53:12.105"),
+				Hostname:       syslogtesting.StringAddress("420-ext-01"),
+				Appname:        syslogtesting.StringAddress("%SYS-5-CONFIG_I"),
+				Message:        syslogtesting.StringAddress(`Configured from console by asdfasdf on vty0 (1.2.3.4)`),
+			},
+		},
+	},
 	// todo > other test cases pleaaaase
 }
 
