@@ -18,6 +18,19 @@ func UnsafeUTF8DecimalCodePointsToInt(chars []uint8) int {
 	return out
 }
 
+// ValidInt checks whether chars contains only valid UTF-8 decimal code points (0-9).
+func ValidInt(chars []uint8) bool {
+	if len(chars) == 0 {
+		return false
+	}
+	for _, c := range chars {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
+}
+
 // RemoveBytes removes byte at given positions from data byte slice, starting from the given offset.
 func RemoveBytes(data []byte, positions []int, offset int) []byte {
 	// We need a copy here to not modify original data

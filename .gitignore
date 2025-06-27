@@ -3,6 +3,7 @@ debug.test
 docs/*.png
 
 .vscode/
+.idea/
 
 *.out
 *.html

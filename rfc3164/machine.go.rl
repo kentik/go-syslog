@@ -70,15 +70,24 @@ action set_rfc3339 {
 action set_msgcount {
 	output.msgcount = uint32(common.UnsafeUTF8DecimalCodePointsToInt(m.text()))
 	output.msgcountSet = true
+	m.pb = m.p
 }
 
 action set_sequence {
-	output.sequence = uint32(common.UnsafeUTF8DecimalCodePointsToInt(m.text()))
-	output.sequenceSet = true
+    if common.ValidInt(m.text()) {
+        output.sequence = uint32(common.UnsafeUTF8DecimalCodePointsToInt(m.text()))
+        output.sequenceSet = true
+    } else {
+        // if the sequence number was not a valid integer, then it must have actually been a hostname
+        output.hostname = string(m.text())
+    }
+    m.pb = m.p
 }
 
 action set_hostname {
-	output.hostname = string(m.text())
+    if string(m.text()) != "" {
+	    output.hostname = string(m.text())
+	}
 }
 
 action set_tag {
@@ -171,7 +180,7 @@ msgcountval = (digit*) >mark %set_msgcount @err(err_msgcount);
 msgcount = (msgcountval ':' sp*) when { m.msgcount };
 # they can also include a "sequence number" after the message counter
 # "<189>237: 000104: *Jan  8 19:46:03.295..."
-sequenceval = (digit+) >mark %set_sequence @err(err_sequence);
+sequenceval = (hostnamerange - '*' -- ':') >mark %set_sequence @err(err_sequence);
 sequence = (sequenceval ':' sp*) when { m.sequence };
 # and optionally put a hostname before the timestamp
 ciscoHostname = (hostname ':' sp*)? when { m.ciscoHostname };
@@ -181,7 +190,7 @@ ciscostar = ('*'?) when { m.msgcount || m.sequence || m.ciscoHostname };
 # ...19:46:03.295: ...
 ciscocolon = (':'?) when { m.msgcount || m.sequence || m.ciscoHostname };
 
-ciscoextras = msgcount? <: sequence? <: ciscoHostname?;
+ciscoextras = msgcount? sequence? ciscoHostname?;
 
 # Section 4.1.3
 # note > alnum{1,32} is too restrictive (eg., no dashes)
